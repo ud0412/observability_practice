@@ -1,0 +1,19 @@
+# Local GitHub credential file
+.github_key
+
+# Local planning document for coding AI
+Plan.md
+
+# Generated state, credentials and local verification tools
+.cache/
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/
+target/
+*.pyc
+*.log
+.env
+config/lab.env
+*.kubeconfig
