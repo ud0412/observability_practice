@@ -1,0 +1,44 @@
+logging {
+  level = "info"
+}
+otelcol.receiver.otlp "apps" {
+  grpc { endpoint = "0.0.0.0:4317" }
+  http { endpoint = "0.0.0.0:4318" }
+  output {
+    metrics = [otelcol.processor.transform.labels.input]
+    traces = [otelcol.processor.batch.apps.input]
+  }
+}
+otelcol.processor.transform "labels" {
+  error_mode = "propagate"
+  metric_statements {
+    context = "datapoint"
+    statements = [
+      "set(attributes[\"service_name\"], resource.attributes[\"service.name\"])",
+      "set(attributes[\"cluster\"], \"observability-lab\")",
+    ]
+  }
+  output { metrics = [otelcol.processor.batch.apps.input] }
+}
+otelcol.processor.batch "apps" {
+  timeout = "5s"
+  send_batch_size = 256
+  output {
+    metrics = [otelcol.exporter.prometheus.apps.input]
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+otelcol.exporter.prometheus "apps" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir.observability.svc.cluster.local:9009/api/v1/push"
+  }
+}
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo.observability.svc.cluster.local:4317"
+    tls { insecure = true }
+  }
+}

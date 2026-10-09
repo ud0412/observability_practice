@@ -1,0 +1,10 @@
+.github_key
+Plan.md
+.git
+.cache
+.venv
+**/node_modules
+**/target
+**/__pycache__
+.env
+config/lab.env

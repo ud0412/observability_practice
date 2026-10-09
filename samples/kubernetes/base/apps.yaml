@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: frontend}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: frontend}}
+  template:
+    metadata:
+      labels: {app: frontend, app.kubernetes.io/name: sample-frontend}
+    spec:
+      containers:
+        - name: frontend
+          image: observability-frontend:lab-v1
+          imagePullPolicy: Never
+          ports: [{containerPort: 8080}]
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {memory: 128Mi}
+          readinessProbe: {httpGet: {path: /, port: 8080}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: frontend}
+spec:
+  selector: {app: frontend}
+  ports: [{port: 8080, targetPort: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: spring-boot}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: spring-boot}}
+  template:
+    metadata:
+      labels: {app: spring-boot, app.kubernetes.io/name: sample-spring-boot}
+    spec:
+      containers:
+        - name: spring-boot
+          image: observability-spring-boot:lab-v1
+          imagePullPolicy: Never
+          ports: [{containerPort: 8080}]
+          env:
+            - {name: DOWNSTREAM_URL, value: 'http://fastapi:8000/test'}
+            - {name: JAVA_TOOL_OPTIONS, value: '-XX:MaxRAMPercentage=65'}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 768Mi}
+          readinessProbe: {httpGet: {path: /health, port: 8080}, initialDelaySeconds: 10}
+          startupProbe: {httpGet: {path: /health, port: 8080}, failureThreshold: 60, periodSeconds: 3}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: spring-boot}
+spec:
+  selector: {app: spring-boot}
+  ports: [{port: 8080, targetPort: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: fastapi}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: fastapi}}
+  template:
+    metadata:
+      labels: {app: fastapi, app.kubernetes.io/name: sample-fastapi}
+    spec:
+      containers:
+        - name: fastapi
+          image: observability-fastapi:lab-v1
+          imagePullPolicy: Never
+          ports: [{containerPort: 8000}]
+          env:
+            - {name: TEST_DELAY_MS, value: '0'}
+            - {name: TEST_FAILURE_MODE, value: none}
+          resources:
+            requests: {cpu: 50m, memory: 96Mi}
+            limits: {memory: 384Mi}
+          readinessProbe: {httpGet: {path: /health, port: 8000}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: fastapi}
+spec:
+  selector: {app: fastapi}
+  ports: [{port: 8000, targetPort: 8000}]
