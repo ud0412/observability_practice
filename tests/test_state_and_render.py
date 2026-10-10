@@ -96,9 +96,9 @@ class StateTests(unittest.TestCase):
                 self.assertTrue(d["spec"]["local"]["path"].startswith("/var/local/observability/"))
             if d["kind"] == "Deployment":
                 self.assertEqual("Recreate", d["spec"]["strategy"]["type"])
-        kind = yaml.safe_load((path / "rendered/kind.yaml").read_text())
-        self.assertTrue(kind["networking"]["disableDefaultCNI"])
-        self.assertEqual(2, len(kind["nodes"]))
+        self.assertFalse((path / "rendered/kind.yaml").exists())
+        self.assertFalse((path / "rendered/gateway.yaml").exists())
+        self.assertFalse(any(d["kind"] in ("Gateway", "GatewayClass", "EnvoyProxy") for d in docs))
 
 
 if __name__ == "__main__": unittest.main()

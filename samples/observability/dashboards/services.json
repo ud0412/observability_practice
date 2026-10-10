@@ -29,8 +29,8 @@
           "text": "sample-spring-boot",
           "value": "sample-spring-boot"
         },
-        "multi": false,
-        "includeAll": false
+        "multi": true,
+        "includeAll": true
       }
     ]
   },
@@ -52,11 +52,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by(service_name)(rate(http_server_request_duration_seconds_count{service_name=~\"$service_name\",http_route=\"/test\"}[5m]))",
+          "expr": "sum by(service_name)(rate(http_server_request_duration_seconds_count{service_name=~\"${service_name:regex}\",http_route=\"/test\"}[5m]))",
           "datasource": {
             "type": "prometheus",
             "uid": "mimir"
-          }
+          },
+          "legendFormat": "{{service_name}}"
         }
       ],
       "fieldConfig": {
@@ -84,11 +85,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "100 * (sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service_name\",http_route=\"/test\",http_response_status_code=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{service_name=~\"$service_name\",http_route=\"/test\"}[5m]))",
+          "expr": "100 * (sum(rate(http_server_request_duration_seconds_count{service_name=~\"${service_name:regex}\",http_route=\"/test\",http_response_status_code=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{service_name=~\"${service_name:regex}\",http_route=\"/test\"}[5m]))",
           "datasource": {
             "type": "prometheus",
             "uid": "mimir"
-          }
+          },
+          "legendFormat": "{{service_name}}"
         }
       ],
       "fieldConfig": {
@@ -116,11 +118,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95,sum by(le,service_name)(rate(http_server_request_duration_seconds_bucket{service_name=~\"$service_name\",http_route=\"/test\"}[5m])))",
+          "expr": "histogram_quantile(0.95,sum by(le,service_name)(rate(http_server_request_duration_seconds_bucket{service_name=~\"${service_name:regex}\",http_route=\"/test\"}[5m])))",
           "datasource": {
             "type": "prometheus",
             "uid": "mimir"
-          }
+          },
+          "legendFormat": "{{service_name}}"
         }
       ],
       "fieldConfig": {
@@ -148,11 +151,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(jvm_memory_used_bytes{service_name=~\"$service_name\"})",
+          "expr": "sum(jvm_memory_used_bytes{service_name=~\"${service_name:regex}\"})",
           "datasource": {
             "type": "prometheus",
             "uid": "mimir"
-          }
+          },
+          "legendFormat": "{{service_name}}"
         }
       ],
       "fieldConfig": {
@@ -180,7 +184,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{namespace=\"sample-app\",service_name=~\"$service_name\"} | json",
+          "expr": "{namespace=\"sample-app\",service_name=~\"${service_name:regex}\"} | json",
           "datasource": {
             "type": "loki",
             "uid": "loki"
@@ -198,6 +202,45 @@
         "showLabels": false,
         "wrapLogMessage": true,
         "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Requests in 15 minutes",
+      "type": "barchart",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mimir"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by(service_name)(increase(http_server_request_duration_seconds_count{service_name=~\"${service_name:regex}\",http_route=\"/test\"}[15m]))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mimir"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "legendFormat": "{{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "service_name",
+        "orientation": "vertical"
       }
     }
   ]

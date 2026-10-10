@@ -86,11 +86,6 @@ def render():
     check_owner(path)
     v = versions()
     keys = json.loads((path / "credentials.json").read_text())
-    kind = {"kind": "Cluster", "apiVersion": "kind.x-k8s.io/v1alpha4", "networking": {"disableDefaultCNI": True},
-            "nodes": [{"role": role, "image": v["KIND_NODE_IMAGE"], "extraMounts": [{
-                "hostPath": str(path / "nodes" / role), "containerPath": "/var/local/observability"}]}
-            for role in ("control-plane", "worker")]}
-    write(path, "kind.yaml", [kind])
     initial = [resource("Namespace", n) for n in ("storage", "observability")]
     sc = resource("StorageClass", "lab-local", provisioner="kubernetes.io/no-provisioner",
                   volumeBindingMode="WaitForFirstConsumer", reclaimPolicy="Retain")
@@ -182,18 +177,9 @@ def render():
                              "securityContext": {"runAsUser": 0}, "volumeMounts": [{"name": "data", "mountPath": "/data"}]}]
     write(path, "grafana.yaml", [resource("Secret", "grafana-admin", "observability", stringData={"password": keys["GRAFANA_PASSWORD"]}),
           configmap("grafana-datasources", "infrastructure/grafana/datasources.yaml", key="datasources.yaml"), grafana, service("grafana", [("http", 3000)])])
-    proxy = {"apiVersion": "gateway.envoyproxy.io/v1alpha1", "kind": "EnvoyProxy", "metadata": {"name": "lab-proxy", "namespace": "envoy-gateway-system"},
-             "spec": {"provider": {"type": "Kubernetes", "kubernetes": {"envoyService": {"type": "ClusterIP"}}}}}
-    gateway_class = {"apiVersion": "gateway.networking.k8s.io/v1", "kind": "GatewayClass", "metadata": {"name": "lab-gateway"},
-                     "spec": {"controllerName": "gateway.envoyproxy.io/gatewayclass-controller", "parametersRef": {
-                         "group": "gateway.envoyproxy.io", "kind": "EnvoyProxy", "name": "lab-proxy", "namespace": "envoy-gateway-system"}}}
-    gateway = {"apiVersion": "gateway.networking.k8s.io/v1", "kind": "Gateway", "metadata": {"name": "lab", "namespace": "envoy-gateway-system"},
-               "spec": {"gatewayClassName": "lab-gateway", "listeners": [{"name": "http", "protocol": "HTTP", "port": 80,
-                          "allowedRoutes": {"namespaces": {"from": "All"}}}]}}
     route = {"apiVersion": "gateway.networking.k8s.io/v1", "kind": "HTTPRoute", "metadata": {"name": "grafana", "namespace": "observability"},
              "spec": {"parentRefs": [{"name": "lab", "namespace": "envoy-gateway-system"}], "rules": [{
                  "matches": [{"path": {"type": "PathPrefix", "value": "/grafana"}}], "backendRefs": [{"name": "grafana", "port": 3000}]}]}}
-    write(path, "gateway.yaml", [proxy, gateway_class, gateway])
     write(path, "grafana-route.yaml", [route])
     print("Rendered infrastructure under " + str(path / "rendered"))
 

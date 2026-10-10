@@ -6,6 +6,7 @@ Plan.md
 
 # Generated state, credentials and local verification tools
 .cache/
+.foundation/
 .venv/
 __pycache__/
 .pytest_cache/

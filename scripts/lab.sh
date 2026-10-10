@@ -3,7 +3,8 @@ source "$(dirname "$0")/lib/common.sh"
 command="${1:-help}"
 case "$command" in
 prepare)
-	"$PYTHON_BIN" "$LAB_ROOT/scripts/lib/state.py" prepare >/dev/null
+	bash "$LAB_ROOT/scripts/preflight.sh"
+	"$PYTHON_BIN" "$LAB_ROOT/scripts/lib/state.py" prepare-observability >/dev/null
 	"$PYTHON_BIN" "$LAB_ROOT/infrastructure/render.py"
 	;;
 up) bash "$LAB_ROOT/scripts/setup-infrastructure.sh" ;;

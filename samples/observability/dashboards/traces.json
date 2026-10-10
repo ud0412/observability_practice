@@ -1,0 +1,88 @@
+{
+  "id": null,
+  "uid": "lab-traces-example",
+  "title": "Lab Trace Scatter Example",
+  "schemaVersion": 41,
+  "version": 1,
+  "tags": [
+    "practice"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "refresh": "30s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request duration — click to open trace",
+      "type": "xychart",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ resource.service.name = \"sample-spring-boot\" && span:kind = server && span.http.route = \"/test\" }",
+          "tableType": "spans",
+          "limit": 100,
+          "spss": 1
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "links": [
+            {
+              "title": "Open this trace",
+              "url": "/grafana/explore?schemaVersion=1&panes=%7B%22left%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22query%22%3A%22${__data.fields[\"Trace ID\"]}%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-24h%22%2C%22to%22%3A%22now%22%7D%7D%7D&orgId=1",
+              "targetBlank": true,
+              "oneClick": true
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "seriesMapping": "auto",
+        "dims": {
+          "x": "Start time",
+          "y": "Duration"
+        },
+        "show": "points",
+        "pointSize": {
+          "fixed": 8
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "startTime": "Start time",
+              "duration": "Duration",
+              "traceID": "Trace ID"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
